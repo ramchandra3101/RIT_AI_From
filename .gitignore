@@ -1,6 +1,5 @@
-frontend/ritagentfrontend/node_modules
-RITAgnetBackend/node_modules
-RITAgnetBackend/.env
-RITAgnetBackend/uploads
-frontend/ritagentfrontend/.next
-
+frontend/node_modules
+backend/node_modules
+backend/.env
+backend/uploads
+frontend/.next
