@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, FormEvent, ChangeEvent, DragEvent } from 'react'
 import axios from 'axios'
+import Logo from './components/Logo'
 
 export default function Home(): React.ReactElement {
   const [file, setFile] = useState<File | null>(null)
@@ -113,7 +114,7 @@ export default function Home(): React.ReactElement {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">RIT Form Extraction</h1>
+        <Logo />
         
         <form onSubmit={handleSubmit} className="mb-8">
           <div 

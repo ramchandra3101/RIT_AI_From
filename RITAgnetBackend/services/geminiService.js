@@ -33,13 +33,22 @@ export const extractData = async(filePath) => {
                 const JsonStr = jsonMatch?jsonMatch[1]:response;
                 let parsedJson = JSON.parse(JsonStr);
                 
-                // Remove any "column" values from the response
+                // Process any "column" values in the response
                 // This will iterate through all properties in the JSON object
                 for (const key in parsedJson) {
-                    // If the value is "column" (case insensitive), remove it
-                    if (typeof parsedJson[key] === 'string' && 
-                        parsedJson[key].toLowerCase() === 'column') {
-                        delete parsedJson[key];
+                    if (typeof parsedJson[key] === 'string') {
+                        // Case 1: Exact match to "column" (case insensitive)
+                        if (parsedJson[key].toLowerCase() === 'column') {
+                            delete parsedJson[key];
+                        } 
+                        // Case 2: Value contains "column" followed by numbers (e.g., "column4")
+                        else {
+                            const columnWithNumberMatch = parsedJson[key].match(/^column(\d+)$/i);
+                            if (columnWithNumberMatch) {
+                                // Extract the numeric part and update the value
+                                parsedJson[key] = columnWithNumberMatch[1];
+                            }
+                        }
                     }
                 }
                 
