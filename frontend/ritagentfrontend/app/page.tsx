@@ -86,7 +86,7 @@ export default function Home(): React.ReactElement {
       formData.append('pdf', file)
       
       // Call your existing backend API
-      await axios.post('http://localhost:3000/api/extract', formData, {
+      await axios.post('/api/extract', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
