@@ -10,11 +10,7 @@ export default function Home(): React.ReactElement {
   const [uploadSuccess, setUploadSuccess] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState<boolean>(false)
-  const airtableIframeRef = useRef<HTMLIFrameElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Your Airtable embed URL
-  const airtableEmbedUrl: string = "https://airtable.com/appj9mwmJYKJRI856/tblCgZVVFeoIk9Uru/viwnoIpIq7j7Wm1Wj?backgroundColor=blue&viewControls=on"
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files[0]) {
@@ -84,18 +80,13 @@ export default function Home(): React.ReactElement {
       // Set success state
       setUploadSuccess(true)
       
-      // Refresh the Airtable iframe to show the updated data
-      if (airtableIframeRef.current) {
-        airtableIframeRef.current.src = airtableIframeRef.current.src
-      }
+      // Refresh the page to show the updated Airtable data
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
       
       // Clear the file input
       setFile(null)
-      
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setUploadSuccess(false)
-      }, 5000)
       
     } catch (err) {
       console.error('Upload failed:', err)
@@ -210,14 +201,15 @@ export default function Home(): React.ReactElement {
           </div>
         )}
         
-        {/* Airtable embed - takes up the rest of the screen */}
-        <div className="w-full h-screen border rounded-lg overflow-hidden">
-          <iframe
-            ref={airtableIframeRef}
-            className="w-full h-full border-0"
-            src={airtableEmbedUrl}
-            frameBorder="0"
-            allowFullScreen
+        {/* Airtable embed */}
+        <div className="mt-10">
+          <iframe 
+            className="airtable-embed" 
+            src="https://airtable.com/embed/appj9mwmJYKJRI856/shrJJRHMMNRW80qAk?viewControls=on" 
+            frameBorder="0" 
+            width="100%" 
+            height="533" 
+            style={{ background: 'transparent', border: '1px solid #ccc' }}
           ></iframe>
         </div>
       </div>
