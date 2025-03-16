@@ -87,8 +87,8 @@ export default function Home(): React.ReactElement {
       
       console.log('Sending request to backend...')
       
-      // Call the proxy API route instead of directly calling the backend
-      const response = await axios.post('/api/backend-proxy', formData, {
+      // Use the ngrok URL directly instead of the proxy API route
+      const response = await axios.post('https://5beb-136-24-163-114.ngrok-free.app/api/extract', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
