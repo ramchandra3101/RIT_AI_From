@@ -1,14 +1,16 @@
 'use client'
 
-import { useState, useRef, FormEvent, ChangeEvent } from 'react'
+import React, { useState, useRef, FormEvent, ChangeEvent, DragEvent } from 'react'
 import axios from 'axios'
 
-export default function Home(): JSX.Element {
+export default function Home(): React.ReactElement {
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState<boolean>(false)
   const [uploadSuccess, setUploadSuccess] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState<boolean>(false)
   const airtableIframeRef = useRef<HTMLIFrameElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Your Airtable embed URL
   const airtableEmbedUrl: string = "https://airtable.com/appj9mwmJYKJRI856/tblCgZVVFeoIk9Uru/viwnoIpIq7j7Wm1Wj?backgroundColor=blue&viewControls=on"
@@ -18,6 +20,41 @@ export default function Home(): JSX.Element {
       setFile(e.target.files[0])
       setError(null)
       setUploadSuccess(false)
+    }
+  }
+
+  const handleDragEnter = (e: DragEvent<HTMLDivElement>): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0]
+      if (droppedFile.type === 'application/pdf') {
+        setFile(droppedFile)
+        setError(null)
+        setUploadSuccess(false)
+      } else {
+        setError('Only PDF files are allowed')
+      }
     }
   }
 
@@ -34,7 +71,7 @@ export default function Home(): JSX.Element {
       setError(null)
       
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('pdf', file)
       
       // Call your existing backend API
       await axios.post('http://localhost:3000/api/extract', formData, {
@@ -67,70 +104,121 @@ export default function Home(): JSX.Element {
     }
   }
 
+  const triggerFileInput = (): void => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Upload section - fixed at the top */}
-      <div className="sticky top-0 z-10 bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900 mb-4 sm:mb-0">Airtable Data Viewer</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">RIT Form Extraction</h1>
+        
+        <form onSubmit={handleSubmit} className="mb-8">
+          <div 
+            className={`border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+              isDragging 
+                ? 'border-blue-500 bg-blue-50' 
+                : file 
+                  ? 'border-green-500 bg-green-50' 
+                  : 'border-gray-300 hover:border-gray-400'
+            }`}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={triggerFileInput}
+            style={{ minHeight: '240px' }}
+          >
+            <input
+              type="file"
+              id="file-upload"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
+              accept="application/pdf"
+            />
             
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative">
-                <input
-                  type="file"
-                  id="file-upload"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={handleFileChange}
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto"
-                >
-                  {file ? file.name.slice(0, 20) + (file.name.length > 20 ? '...' : '') : "Select File"}
-                </label>
-              </div>
-              
-              <button
-                type="submit"
-                disabled={isUploading || !file}
-                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto ${
-                  isUploading || !file 
-                    ? 'bg-blue-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isUploading ? 'Processing...' : 'Upload'}
-              </button>
-            </form>
+            <div className="text-center">
+              {file ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p className="text-lg font-medium text-gray-900">{file.name}</p>
+                  <p className="text-sm text-gray-500 mt-1">{(file.size / 1024).toFixed(2)} KB</p>
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <p className="text-lg font-medium text-gray-900">Drag and drop your PDF file here</p>
+                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                </>
+              )}
+            </div>
           </div>
           
-          {/* Notifications */}
-          {error && (
-            <div className="mt-3 bg-red-50 p-3 rounded-md">
-              <p className="text-sm text-red-700">{error}</p>
+          <div className="mt-4 flex justify-center">
+            <button
+              type="submit"
+              disabled={isUploading || !file}
+              className={`px-6 py-3 rounded-md shadow-sm text-base font-medium text-white transition-colors ${
+                isUploading || !file 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isUploading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : 'Upload and Process PDF'}
+            </button>
+          </div>
+        </form>
+        
+        {/* Notifications */}
+        {error && (
+          <div className="mb-6 bg-red-50 p-4 rounded-md">
+            <div className="flex">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="ml-3 text-sm text-red-700">{error}</p>
             </div>
-          )}
-          
-          {uploadSuccess && (
-            <div className="mt-3 bg-green-50 p-3 rounded-md">
-              <p className="text-sm text-green-700">
+          </div>
+        )}
+        
+        {uploadSuccess && (
+          <div className="mb-6 bg-green-50 p-4 rounded-md">
+            <div className="flex">
+              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <p className="ml-3 text-sm text-green-700">
                 File processed successfully! The latest data is highlighted below.
               </p>
             </div>
-          )}
+          </div>
+        )}
+        
+        {/* Airtable embed - takes up the rest of the screen */}
+        <div className="w-full h-screen border rounded-lg overflow-hidden">
+          <iframe
+            ref={airtableIframeRef}
+            className="w-full h-full border-0"
+            src={airtableEmbedUrl}
+            frameBorder="0"
+            allowFullScreen
+          ></iframe>
         </div>
-      </div>
-      
-      {/* Airtable embed - takes up the rest of the screen */}
-      <div className="w-full h-screen pt-16">
-        <iframe
-          ref={airtableIframeRef}
-          className="w-full h-full border-0"
-          src={airtableEmbedUrl}
-          frameBorder="0"
-          allowFullScreen
-        ></iframe>
       </div>
     </main>
   )
