@@ -85,12 +85,19 @@ export default function Home(): React.ReactElement {
       const formData = new FormData()
       formData.append('pdf', file)
       
-      // Call your existing backend API
-      await axios.post('/api/extract', formData, {
+      console.log('Sending request to backend...')
+      
+      // Call the proxy API route instead of directly calling the backend
+      const response = await axios.post('/api/backend-proxy', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        // Add timeout and retry options
+        timeout: 30000,
+        withCredentials: false
       })
+      
+      console.log('Response received:', response.data)
       
       // Set success state
       setUploadSuccess(true)
@@ -99,13 +106,25 @@ export default function Home(): React.ReactElement {
       setTimeout(() => {
         window.location.reload()
       }, 2000)
-      
-      // Clear the file input
-      setFile(null)
-      
-    } catch (err) {
-      console.error('Upload failed:', err)
-      setError('Failed to process the file. Please try again.')
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          setError('Request timed out. Please try again.')
+        } else if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          setError(`Server error: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`)
+        } else if (error.request) {
+          // The request was made but no response was received
+          setError('No response from server. Please check if the backend is running.')
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setError(`Error: ${error.message}`)
+        }
+      } else {
+        setError('An unexpected error occurred')
+      }
     } finally {
       setIsUploading(false)
     }

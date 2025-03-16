@@ -7,7 +7,14 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(cors());
+
+// Update CORS configuration to be more permissive for local development
+app.use(cors({
+  origin: '*',  // Allow all origins for local development
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 
@@ -20,4 +27,3 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
