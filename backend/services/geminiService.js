@@ -14,8 +14,22 @@ export const extractData = async(filePath) => {
         const base64Data = fileBuffer.toString('base64');
 
 
-        const prompt = `extract the pdf to json in a structure with the following keys: date in the form of MM/DD/YYYY, firstName, lastName, row1, row2.. row9. do integer values starting at date and moving down the page. for the rows with x define which column they are in i.e. row 2 the x is in column 3 so print the value of the column the x is in for the rows with an x value.`
-
+        const prompt = `
+        Extract the information from this PDF into a structured JSON format with the following fields:
+        - date: The date in MM/DD/YYYY format
+        - firstName: The person's first name 
+        - lastName: The person's last name
+        - row1 through row9: For each row (EXCEPT row5), identify which column (1, 2, 3, etc.) contains a mark, selection, or filled value.
+        
+        SPECIAL CASE - row5: For row5 specifically, extract the handwritten text value that the user has written in, not a column number.
+        
+        A mark could be an X, checkmark, filled circle, dot, or any other indication that the column has been selected.
+        For example:
+        - If row2 has a mark in the third column, the value for row2 should be "3"
+        - If row5 contains handwritten text saying "Referred by Dr. Smith", then row5 should be "Referred by Dr. Smith"
+        
+        Please only return valid JSON without any additional text or formatting.
+        `;
         const filePart = {
             inlineData: {
                 data: base64Data,
