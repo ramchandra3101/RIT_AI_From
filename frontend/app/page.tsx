@@ -29,9 +29,11 @@ export default function Home(): React.ReactElement {
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      const selectedFile = e.target.files[0]
+      setFile(selectedFile)
       setError(null)
       setUploadSuccess(false)
+      processFile(selectedFile)
     }
   }
 
@@ -64,16 +66,15 @@ export default function Home(): React.ReactElement {
         setFile(droppedFile)
         setError(null)
         setUploadSuccess(false)
+        processFile(droppedFile)
       } else {
         setError('Only PDF files are allowed')
       }
     }
   }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault()
-    
-    if (!file) {
+  const processFile = async (fileToProcess: File): Promise<void> => {
+    if (!fileToProcess) {
       setError('Please select a file to upload')
       return
     }
@@ -83,7 +84,7 @@ export default function Home(): React.ReactElement {
       setError(null)
       
       const formData = new FormData()
-      formData.append('pdf', file)
+      formData.append('pdf', fileToProcess)
       
       console.log('Sending request to backend...')
       
@@ -130,6 +131,11 @@ export default function Home(): React.ReactElement {
     }
   }
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault()
+    // Form submission is no longer needed as files are processed automatically
+  }
+
   const triggerFileInput = (): void => {
     if (fileInputRef.current) {
       fileInputRef.current.click()
@@ -146,9 +152,11 @@ export default function Home(): React.ReactElement {
             className={`border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer transition-colors ${
               isDragging 
                 ? 'border-blue-500 bg-blue-50' 
-                : file 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+                : isUploading
+                  ? 'border-yellow-500 bg-yellow-50'
+                  : file 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-gray-300 hover:border-gray-400'
             }`}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -167,7 +175,18 @@ export default function Home(): React.ReactElement {
             />
             
             <div className="text-center">
-              {file ? (
+              {isUploading ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <svg className="animate-spin h-12 w-12 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium text-gray-900">Processing {file?.name}...</p>
+                  <p className="text-sm text-gray-500 mt-1">Please wait while we extract the data</p>
+                </>
+              ) : file ? (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -182,31 +201,10 @@ export default function Home(): React.ReactElement {
                   </svg>
                   <p className="text-lg font-medium text-gray-900">Drag and drop your PDF file here</p>
                   <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                  <p className="text-sm text-blue-600 mt-2">Files will be processed automatically upon upload</p>
                 </>
               )}
             </div>
-          </div>
-          
-          <div className="mt-4 flex justify-center">
-            <button
-              type="submit"
-              disabled={isUploading || !file}
-              className={`px-6 py-3 rounded-md shadow-sm text-base font-medium text-white transition-colors ${
-                isUploading || !file 
-                  ? 'bg-blue-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {isUploading ? (
-                <div className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </div>
-              ) : 'Upload and Process PDF'}
-            </button>
           </div>
         </form>
         
