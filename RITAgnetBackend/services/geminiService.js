@@ -18,6 +18,7 @@ export const extractData = async(filePath) => {
         
 
 
+
         const filePart = {
             inlineData: {
                 data: base64Data,
@@ -34,7 +35,27 @@ export const extractData = async(filePath) => {
                 response.match(/(\{[\s\S]*\})/)
 
                 const JsonStr = jsonMatch?jsonMatch[1]:response;
-                const parsedJson = JSON.parse(JsonStr);
+                let parsedJson = JSON.parse(JsonStr);
+                
+                // Process any "column" values in the response
+                // This will iterate through all properties in the JSON object
+                for (const key in parsedJson) {
+                    if (typeof parsedJson[key] === 'string') {
+                        // Case 1: Exact match to "column" (case insensitive)
+                        if (parsedJson[key].toLowerCase() === 'column') {
+                            delete parsedJson[key];
+                        } 
+                        // Case 2: Value contains "column" followed by numbers (e.g., "column4")
+                        else {
+                            const columnWithNumberMatch = parsedJson[key].match(/^column(\d+)$/i);
+                            if (columnWithNumberMatch) {
+                                // Extract the numeric part and update the value
+                                parsedJson[key] = columnWithNumberMatch[1];
+                            }
+                        }
+                    }
+                }
+                
                 return parsedJson;
         } catch (parseError) {
                 console.error('Error parsing JSON response:', parseError);
