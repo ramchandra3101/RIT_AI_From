@@ -14,7 +14,7 @@ export const extractData = async(filePath) => {
         const base64Data = fileBuffer.toString('base64');
 
 
-        const prompt = `extract the pdf to json in a structure with the following keys: date in the form of MM/DD/YYYY, firstName, lastName, row2, row3, row4, row5.. row10. do integer values starting at date and moving down the page. for the rows with x define which column they are in i.e. row 2 the x is in column 3 so print the value of the column the x is in for the rows with an x value.`
+        const prompt = `extract the pdf to json in a structure with the following keys: date in the form of MM/DD/YYYY, firstName, lastName, row2, row3, row4, row5.. row10. do integer values starting at date and moving down the page. for the rows with x define which position they are in i.e. row 2 the x is in position 3 so print the value of the position the x is in for the rows with an x value.`
 
         const filePart = {
             inlineData: {
@@ -31,7 +31,18 @@ export const extractData = async(filePath) => {
                 response.match(/(\{[\s\S]*\})/)
 
                 const JsonStr = jsonMatch?jsonMatch[1]:response;
-                const parsedJson = JSON.parse(JsonStr);
+                let parsedJson = JSON.parse(JsonStr);
+                
+                // Remove any "column" values from the response
+                // This will iterate through all properties in the JSON object
+                for (const key in parsedJson) {
+                    // If the value is "column" (case insensitive), remove it
+                    if (typeof parsedJson[key] === 'string' && 
+                        parsedJson[key].toLowerCase() === 'column') {
+                        delete parsedJson[key];
+                    }
+                }
+                
                 return parsedJson;
         } catch (parseError) {
                 console.error('Error parsing JSON response:', parseError);
