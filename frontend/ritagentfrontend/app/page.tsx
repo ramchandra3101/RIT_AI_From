@@ -3,6 +3,21 @@
 import React, { useState, useRef, FormEvent, ChangeEvent, DragEvent } from 'react'
 import axios from 'axios'
 import Logo from './components/Logo'
+import dynamic from 'next/dynamic'
+
+// Client-side only component for Airtable embed
+const AirtableEmbed = dynamic(() => Promise.resolve(() => (
+  <div className="mt-10">
+    <iframe 
+      className="airtable-embed" 
+      src="https://airtable.com/embed/appj9mwmJYKJRI856/shrJJRHMMNRW80qAk?viewControls=on" 
+      frameBorder="0" 
+      width="100%" 
+      height="533" 
+      style={{ background: 'transparent', border: '1px solid #ccc' }}
+    ></iframe>
+  </div>
+)), { ssr: false })
 
 export default function Home(): React.ReactElement {
   const [file, setFile] = useState<File | null>(null)
@@ -201,17 +216,8 @@ export default function Home(): React.ReactElement {
           </div>
         )}
         
-        {/* Airtable embed */}
-        <div className="mt-10">
-          <iframe 
-            className="airtable-embed" 
-            src="https://airtable.com/embed/appj9mwmJYKJRI856/shrJJRHMMNRW80qAk?viewControls=on" 
-            frameBorder="0" 
-            width="100%" 
-            height="533" 
-            style={{ background: 'transparent', border: '1px solid #ccc' }}
-          ></iframe>
-        </div>
+        {/* Airtable embed - client-side only */}
+        <AirtableEmbed />
       </div>
     </main>
   )
